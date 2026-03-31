@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Monthly Budget Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { margin: 0; padding: 1.5rem; background: #f5f5f7; color: #111827; }
+    h1 { margin-bottom: 0.25rem; }
+    h2 { margin-top: 1.5rem; margin-bottom: 0.5rem; }
+    .container { max-width: 900px; margin: 0 auto; background: #ffffff; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+    .row { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; }
+    .row > div { flex: 1 1 200px; }
+    label { display: block; font-size: 0.85rem; margin-bottom: 0.25rem; color: #4b5563; }
+    input, select { width: 100%; padding: 0.5rem 0.6rem; border-radius: 0.5rem; border: 1px solid #d1d5db; font-size: 0.95rem; }
+    input:focus, select:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 1px #2563eb33; }
+    button { border: none; border-radius: 0.5rem; padding: 0.55rem 1rem; font-size: 0.95rem; cursor: pointer; }
+    .btn-primary { background: #2563eb; color: #ffffff; }
+    .btn-secondary { background: #e5e7eb; color: #111827; }
+    .btn-danger { background: #ef4444; color: #ffffff; }
+    .summary { display: flex; flex-wrap: wrap; gap: 1rem; margin: 1rem 0; }
+    .card { flex: 1 1 150px; background: #f9fafb; border-radius: 0.75rem; padding: 0.75rem 1rem; border: 1px solid #e5e7eb; }
+    .card-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; margin-bottom: 0.25rem; }
+    .card-value { font-size: 1.1rem; font-weight: 600; }
+    .card.good { border-color: #22c55e33; background: #ecfdf3; }
+    .card.bad { border-color: #ef444433; background: #fef2f2; }
+    table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+    th, td { padding: 0.5rem; font-size: 0.9rem; border-bottom: 1px solid #e5e7eb; text-align: left; }
+    th { background: #f3f4f6; font-weight: 600; }
+    tr:nth-child(even) td { background: #f9fafb; }
+    .right { text-align: right; }
+    .category-pill { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 999px; font-size: 0.75rem; background: #e5e7eb; color: #374151; }
+    .header-row { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
+    .small { font-size: 0.8rem; color: #6b7280; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header-row">
+      <div>
+        <h1>Monthly Budget Tracker</h1>
+        <div class="small">Data is stored locally in your browser (no account, no server).</div>
+      </div>
+      <div>
+        <label for="monthSelect">Month</label>
+        <input type="month" id="monthSelect" />
+      </div>
+    </div>
+
+    <h2>Budget setup</h2>
+    <div class="row">
+      <div>
+        <label for="incomeInput">Planned income for this month</label>
+        <input type="number" id="incomeInput" min="0" step="0.01" placeholder="e.g. 3500" />
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <button class="btn-primary" id="saveBudgetBtn">Save budget</button>
+      </div>
+    </div>
+
+    <div class="summary">
+      <div class="card">
+        <div class="card-title">Planned income</div>
+        <div class="card-value" id="plannedIncome">$0.00</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Total spent</div>
+        <div class="card-value" id="totalSpent">$0.00</div>
+      </div>
+      <div class="card" id="remainingCard">
+        <div class="card-title">Remaining</div>
+        <div class="card-value" id="remainingAmount">$0.00</div>
+      </div>
+    </div>
+
+    <!-- RECURRING EXPENSES SECTION -->
+    <h2>Recurring Monthly Expenses</h2>
+    <div class="row">
+      <div>
+        <label for="recName">Name</label>
+        <input type="text" id="recName" placeholder="Rent, Phone Bill, Insurance..." />
+      </div>
+      <div>
+        <label for="recCategory">Category</label>
+        <select id="recCategory">
+          <option value="Housing">Housing</option>
+          <option value="Food">Food</option>
+          <option value="Transportation">Transportation</option>
+          <option value="Utilities">Utilities</option>
+          <option value="Entertainment">Entertainment</option>
+          <option value="Debt">Debt</option>
+          <option value="Savings">Savings</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div>
+        <label for="recAmount">Amount</label>
+        <input type="number" id="recAmount" min="0" step="0.01" placeholder="e.g. 120.00" />
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <button class="btn-primary" id="addRecurringBtn">Add recurring</button>
+      </div>
+    </div>
+
+    <button class="btn-secondary" id="applyRecurringBtn">Apply recurring to this month</button>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Category</th>
+          <th class="right">Amount</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="recurringTableBody"></tbody>
+    </table>
+
+    <h2>Add expense</h2>
+    <div class="row">
+      <div>
+        <label for="expenseName">Name</label>
+        <input type="text" id="expenseName" placeholder="Groceries, Rent, Uber..." />
+      </div>
+      <div>
+        <label for="expenseCategory">Category</label>
+        <select id="expenseCategory">
+          <option value="Housing">Housing</option>
+          <option value="Food">Food</option>
+          <option value="Transportation">Transportation</option>
+          <option value="Utilities">Utilities</option>
+          <option value="Entertainment">Entertainment</option>
+          <option value="Debt">Debt</option>
+          <option value="Savings">Savings</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div>
+        <label for="expenseAmount">Amount</label>
+        <input type="number" id="expenseAmount" min="0" step="0.01" placeholder="e.g. 45.90" />
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <button class="btn-primary" id="addExpenseBtn">Add expense</button>
+      </div>
+    </div>
+
+    <div class="header-row">
+      <h2>Expenses</h2>
+      <button class="btn-secondary" id="clearMonthBtn">Clear this month</button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Name</th>
+          <th>Category</th>
+          <th class="right">Amount</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="expenseTableBody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const monthSelect = document.getElementById('monthSelect');
+    const incomeInput = document.getElementById('incomeInput');
+    const saveBudgetBtn = document.getElementById('saveBudgetBtn');
+    const plannedIncomeEl = document.getElementById('plannedIncome');
+    const totalSpentEl = document.getElementById('totalSpent');
+    const remainingAmountEl = document.getElementById('remainingAmount');
+    const remainingCard = document.getElementById('remainingCard');
+
+    const expenseName = document.getElementById('expenseName');
+    const expenseCategory = document.getElementById('expenseCategory');
+    const expenseAmount = document.getElementById('expenseAmount');
+    const addExpenseBtn = document.getElementById('addExpenseBtn');
+    const expenseTableBody = document.getElementById('expenseTableBody');
+    const clearMonthBtn = document.getElementById('clearMonthBtn');
+
+    const recName = document.getElementById('recName');
+    const recCategory = document.getElementById('recCategory');
+    const recAmount = document.getElementById('recAmount');
+    const addRecurringBtn = document.getElementById('addRecurringBtn');
+    const applyRecurringBtn = document.getElementById('applyRecurringBtn');
+    const recurringTableBody = document.getElementById('recurringTableBody');
+
+    const STORAGE_KEY = 'simple_monthly_budget_v1';
+
+    function getCurrentMonthKey() {
+      return monthSelect.value || new Date().toISOString().slice(0, 7);
+    }
+
+    function loadData() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    }
+
+    function saveData(data) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function formatCurrency(num) {
+      return '$' + (Number(num) || 0).toFixed(2);
+    }
+
+    function ensureMonthExists(data, monthKey) {
+      if (!data[monthKey]) {
+        data[monthKey] = { income: 0, expenses: [] };
+      }
+    }
+
+    function ensureRecurringExists(data) {
+      if (!data.recurring) data.recurring = [];
+    }
+
+    function renderRecurring() {
+      const data = loadData();
+      ensureRecurringExists(data);
+
+      recurringTableBody.innerHTML = '';
+      data.recurring.forEach((rec, index) => {
+        const tr = document.createElement('tr');
+
+        const tdName = document.createElement('td');
+        tdName.textContent = rec.name;
+
+        const tdCat = document.createElement('td');
+        tdCat.textContent = rec.category;
+
+        const tdAmount = document.createElement('td');
+        tdAmount.className = 'right';
+        tdAmount.textContent = formatCurrency(rec.amount);
+
+        const tdActions = document.createElement('td');
+        const delBtn = document.createElement('button');
+        delBtn.textContent = 'Delete';
+        delBtn.className = 'btn-danger';
+        delBtn.style.fontSize = '0.8rem';
+        delBtn.onclick = () => deleteRecurring(index);
+        tdActions.appendChild(delBtn);
+
+        tr.appendChild(tdName);
+        tr.appendChild(tdCat);
+        tr.appendChild(tdAmount);
+        tr.appendChild(tdActions);
+
+        recurringTableBody.appendChild(tr);
+      });
+    }
+
+    function addRecurring() {
+      const name = recName.value.trim();
+      const category = recCategory.value;
+      const amount = Number(recAmount.value);
+
+      if (!name || !amount) {
+        alert('Please enter a name and amount.');
+        return;
+      }
+
+      const data = loadData();
+      ensureRecurringExists(data);
+
+      data.recurring.push({ name, category, amount });
+      saveData(data);
+
+      recName.value = '';
+      recAmount.value = '';
+
+      renderRecurring();
+    }
+
+    function deleteRecurring(index) {
+      const data = loadData();
+      ensureRecurringExists(data);
+
+      data.recurring.splice(index, 1);
+      saveData(data);
+
+      renderRecurring();
+    }
+
+    function applyRecurringToMonth() {
+      const monthKey = getCurrentMonthKey();
+      const data = loadData();
+      ensureMonthExists(data, monthKey);
+      ensureRecurringExists(data);
+
+      const today = new Date().toISOString().slice(0, 10);
+
+      data.recurring.forEach(rec => {
+        data[monthKey].expenses.push({
+          name: rec.name,
+          category: rec.category,
+          amount: rec.amount,
+          date: today
+        });
+      });
+
+      saveData(data);
+      render();
+    }
+
+    function render() {
+      const monthKey = getCurrentMonthKey();
+      const data = loadData();
+      ensureMonthExists(data, monthKey);
+
+      plannedIncomeEl.textContent = formatCurrency(data[monthKey].income);
+
+      expenseTableBody.innerHTML = '';
+      let total = 0;
+      data[monthKey].expenses.forEach((exp, index) => {
+        total += Number(exp.amount) || 0;
+        const tr = document.createElement('tr');
+
+        const tdDate = document.createElement('td');
+        tdDate.textContent = exp.date;
+
+        const tdName = document.createElement('td');
+        tdName.textContent = exp.name;
+
+        const tdCat = document.createElement('td');
+        const spanCat = document.createElement('span');
+        spanCat.className = 'category-pill';
+        spanCat.textContent = exp.category;
+        tdCat.appendChild(spanCat);
+
+        const tdAmount = document.createElement('td');
+        tdAmount.className = 'right';
+        tdAmount.textContent = formatCurrency(exp.amount);
+
+        const tdActions = document.createElement('td');
+        const delBtn = document.createElement('button');
+        delBtn.textContent = 'Delete';
+        delBtn.className = 'btn-danger';
+        delBtn.style.fontSize = '0.8rem';
+        delBtn.onclick = () => deleteExpense(index);
+        tdActions.appendChild(delBtn);
+
+        tr.appendChild(tdDate);
+        tr.appendChild(tdName);
+        tr.appendChild(tdCat);
+        tr.appendChild(tdAmount);
+        tr.appendChild(tdActions);
+
+        expenseTableBody.appendChild(tr);
+      });
+
+      totalSpentEl.textContent = formatCurrency(total);
+      const remaining = (Number(data[monthKey].income) || 0) - total;
+      remainingAmountEl.textContent = formatCurrency(remaining);
+
+      if (remaining >= 0) {
+        remainingCard.classList.add('good');
+        remainingCard.classList.remove('bad');
+      } else {
+        remainingCard.classList.add('bad');
+        remainingCard.classList.remove('good');
+      }
+
+      incomeInput.value = data[monthKey].income || '';
+
+      renderRecurring();
+    }
+
+    function saveBudget() {
+      const monthKey = getCurrentMonthKey();
+      const data = loadData();
+      ensureMonthExists(data, monthKey);
+      data[monthKey].income = Number(incomeInput.value) || 0;
+      saveData(data);
+      render();
+    }
+
+    function addExpense() {
+      const name = expenseName.value.trim();
+      const category = expenseCategory.value;
+      const amount = Number(expenseAmount.value);
+
+      if (!name || !amount) {
+        alert('Please enter a name and amount.');
+        return;
+      }
+
+      const monthKey = getCurrentMonthKey();
+      const data = loadData();
+      ensureMonthExists(data, monthKey);
+
+      const today = new Date().toISOString().slice(0, 10);
+
+      data[monthKey].expenses.push({
+        name,
+        category,
+        amount,
+        date: today
+      });
+
+      saveData(data);
+
+      expenseName.value = '';
+      expenseAmount.value = '';
+      render();
+    }
+
+    function deleteExpense(index) {
+      const monthKey = getCurrentMonthKey();
+      const data = loadData();
+      ensureMonthExists(data, monthKey);
+      data[monthKey].expenses.splice(index, 1);
+      saveData(data);
+      render();
+    }
+
+    function clearMonth() {
+      if (!confirm('Clear all data for this month?')) return;
+      const monthKey = getCurrentMonthKey();
+      const data = loadData();
+      data[monthKey] = { income: 0, expenses: [] };
+      saveData(data);
+      render();
+    }
+
+    (function init() {
+      const nowMonth = new Date().toISOString().slice(0, 7);
+      monthSelect.value = nowMonth;
+
+      monthSelect.addEventListener('change', render);
+      saveBudgetBtn.addEventListener('click', saveBudget);
+      addExpenseBtn.addEventListener('click', addExpense);
+      clearMonthBtn.addEventListener('click', clearMonth);
+
+      addRecurringBtn.addEventListener('click', addRecurring);
+      applyRecurringBtn.addEventListener('click', applyRecurringToMonth);
+
+      render();
+    })();
+  </script>
+</body>
+</html>
