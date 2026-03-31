@@ -103,6 +103,9 @@ async function addRecurring() {
 
   recName.value = "";
   recAmount.value = "";
+  
+  await renderRecurring();   // ← THIS MAKES THE LIST UPDATE IMMEDIATELY
+  
 }
 
 async function deleteRecurring(id) {
