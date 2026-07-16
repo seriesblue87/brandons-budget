@@ -304,12 +304,26 @@
           <h2>Add Income</h2>
           <div class="field-row">
             <div>
-              <input type="number" id="incomeInput" min="0" step="0.01" aria-label="Income amount" />
+              <label for="incomeName">Source</label>
+              <input type="text" id="incomeName" placeholder="Paycheck, freelance, etc." />
+            </div>
+            <div>
+              <label for="incomeAmount">Amount</label>
+              <input type="number" id="incomeAmount" min="0" step="0.01" />
+            </div>
+            <div>
+              <label for="incomeDate">Date</label>
+              <input type="date" id="incomeDate" />
             </div>
             <div style="flex:0 0 auto;align-self:flex-end;">
-              <button class="btn-primary" id="saveBudgetBtn">Add Income</button>
+              <button class="btn-primary" id="addIncomeBtn">Add Income</button>
             </div>
           </div>
+
+          <table>
+            <thead><tr><th>Date</th><th>Source</th><th class="right">Amount</th><th></th></tr></thead>
+            <tbody id="incomeTableBody"></tbody>
+          </table>
         </div>
 
         <div class="card glass">
@@ -337,16 +351,15 @@
               <label for="expenseDate">Date</label>
               <input type="date" id="expenseDate" />
             </div>
-            <div style="flex:0 0 auto;align-self:flex-end;">
+          </div>
+          <div class="field-row" style="align-items:center;">
+            <label class="recurring-check" style="flex:1 1 auto;margin:0;">
+              <input type="checkbox" id="expenseRecurringCheckbox" />
+              <span>Recurring — repeats every month automatically</span>
+            </label>
+            <div style="flex:0 0 auto;">
               <button class="btn-primary" id="addExpenseBtn">Add</button>
             </div>
-          </div>
-          <label class="recurring-check">
-            <input type="checkbox" id="expenseRecurringCheckbox" />
-            <span>This is a recurring expense</span>
-          </label>
-          <div class="footer-actions">
-            <button class="btn-secondary" id="applyRecurringBtn">Apply Recurring to This Month</button>
           </div>
         </div>
 
