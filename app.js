@@ -5,8 +5,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import {
   getFirestore,
   doc,
-  setDoc,
-  getDoc,
   deleteDoc,
   collection,
   addDoc,
@@ -67,8 +65,12 @@ const MONTH_LABELS = [
 // ---------------------------------------------------------
 // DOM ELEMENTS
 // ---------------------------------------------------------
-const incomeInput = document.getElementById('incomeInput');
-const saveBudgetBtn = document.getElementById('saveBudgetBtn');
+const incomeName = document.getElementById('incomeName');
+const incomeAmount = document.getElementById('incomeAmount');
+const incomeDate = document.getElementById('incomeDate');
+const addIncomeBtn = document.getElementById('addIncomeBtn');
+const incomeTableBody = document.getElementById('incomeTableBody');
+
 const plannedIncomeEl = document.getElementById('plannedIncome');
 const totalSpentEl = document.getElementById('totalSpent');
 const remainingAmountEl = document.getElementById('remainingAmount');
@@ -79,7 +81,6 @@ const expenseAmount = document.getElementById('expenseAmount');
 const expenseDate = document.getElementById('expenseDate');
 const expenseRecurringCheckbox = document.getElementById('expenseRecurringCheckbox');
 const addExpenseBtn = document.getElementById('addExpenseBtn');
-const applyRecurringBtn = document.getElementById('applyRecurringBtn');
 const expenseTableBody = document.getElementById('expenseTableBody');
 
 const fullResetBtn = document.getElementById('fullResetBtn');
@@ -100,7 +101,7 @@ const todayMonthBtn = document.getElementById('todayMonthBtn');
 // ---------------------------------------------------------
 // STATE
 // ---------------------------------------------------------
-let currentIncome = 0;
+let currentIncomeEntries = [];
 let currentExpenses = [];
 let selectedMonth = todayISO().slice(0, 7); // "YYYY-MM"
 let unsubIncome = null;
@@ -121,12 +122,12 @@ function categoryClass(category) {
   return String(category || '').replace(/\s+/g, ' ').trim().replace(/ /g, '.');
 }
 
-function monthDocPath(monthKey) {
-  return `users/${USER_ID}/months/${monthKey}`;
+function monthIncomePath(monthKey) {
+  return `users/${USER_ID}/months/${monthKey}/income`;
 }
 
 function monthExpensesPath(monthKey) {
-  return `${monthDocPath(monthKey)}/expenses`;
+  return `users/${USER_ID}/months/${monthKey}/expenses`;
 }
 
 function formatMonthLabel(monthKey) {
@@ -152,30 +153,62 @@ function shiftMonth(monthKey, delta) {
 // ---------------------------------------------------------
 // Always credits the paycheck to the month that actually contains today,
 // regardless of which month the user currently has open in the selector.
+// Skips adding it twice if it's already been added today.
 async function applyPaycheckIfToday() {
   const today = todayISO();
+  if (!PAYCHECK_DATES.includes(today)) return;
 
-  if (PAYCHECK_DATES.includes(today)) {
-    const todaysMonthKey = today.slice(0, 7);
-    const monthRef = doc(db, monthDocPath(todaysMonthKey));
-    const snap = await getDoc(monthRef);
+  const todaysMonthKey = today.slice(0, 7);
+  const incomeColRef = collection(db, monthIncomePath(todaysMonthKey));
+  const snap = await getDocs(incomeColRef);
+  const alreadyAdded = snap.docs.some(d => d.data().name === 'Paycheck' && d.data().date === today);
+  if (alreadyAdded) return;
 
-    const income = snap.exists() ? (snap.data().income || 0) : 0;
-
-    await setDoc(monthRef, {
-      income: income + PAYCHECK_AMOUNT
-    }, { merge: true });
-  }
+  await addDoc(incomeColRef, { name: 'Paycheck', amount: PAYCHECK_AMOUNT, date: today });
 }
 
 // ---------------------------------------------------------
-// SAVE INCOME
+// INCOME
 // ---------------------------------------------------------
-async function saveBudget() {
-  const monthRef = doc(db, monthDocPath(selectedMonth));
-  const income = Number(incomeInput.value) || 0;
+async function addIncome() {
+  const name = incomeName.value.trim();
+  const amount = Number(incomeAmount.value);
+  const date = incomeDate.value || todayISO();
 
-  await setDoc(monthRef, { income }, { merge: true });
+  if (!name || !amount) return alert("Enter source + amount");
+
+  await addDoc(collection(db, monthIncomePath(selectedMonth)), { name, amount, date });
+
+  incomeName.value = "";
+  incomeAmount.value = "";
+  incomeDate.value = todayISO();
+}
+
+async function deleteIncome(id) {
+  await deleteDoc(doc(db, `${monthIncomePath(selectedMonth)}/${id}`));
+}
+
+function renderIncomeTable(incomeEntries) {
+  incomeTableBody.innerHTML = "";
+
+  if (incomeEntries.length === 0) {
+    incomeTableBody.innerHTML = `<tr class="empty-row"><td colspan="4">No income logged yet</td></tr>`;
+    return;
+  }
+
+  const sorted = [...incomeEntries].sort((a, b) => (a.date < b.date ? 1 : -1));
+
+  sorted.forEach(inc => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${formatDisplayDate(inc.date)}</td>
+      <td>${inc.name}</td>
+      <td class="right">${formatCurrency(inc.amount)}</td>
+      <td class="row-actions"><button class="btn-danger">Delete</button></td>
+    `;
+    tr.querySelector("button").onclick = () => deleteIncome(inc.id);
+    incomeTableBody.appendChild(tr);
+  });
 }
 
 // ---------------------------------------------------------
@@ -205,17 +238,21 @@ async function removeRecurringTemplate(name) {
   await Promise.all(matches.map(m => deleteDoc(doc(db, `users/${USER_ID}/recurring/${m.id}`))));
 }
 
-// Pulls in any recurring templates not already logged this month.
-async function applyRecurringToMonth() {
+// Pulls in any recurring templates not already logged in the given month.
+// Called automatically whenever a month is opened (see switchMonth), so
+// recurring items just show up without the user having to click anything.
+async function ensureRecurringAppliedToMonth(monthKey, expensesAtOpen) {
   const templates = await loadRecurringTemplates();
-  const existingNames = new Set(currentExpenses.map(e => e.name.toLowerCase()));
-  const dateForEntry = selectedMonth === todayISO().slice(0, 7)
+  if (templates.length === 0) return;
+
+  const existingNames = new Set(expensesAtOpen.map(e => e.name.toLowerCase()));
+  const dateForEntry = monthKey === todayISO().slice(0, 7)
     ? todayISO()
-    : `${selectedMonth}-01`;
+    : `${monthKey}-01`;
 
   for (const rec of templates) {
     if (existingNames.has(rec.name.toLowerCase())) continue;
-    await addDoc(collection(db, monthExpensesPath(selectedMonth)), {
+    await addDoc(collection(db, monthExpensesPath(monthKey)), {
       name: rec.name,
       category: rec.category,
       amount: rec.amount,
@@ -305,17 +342,18 @@ function renderExpenseTable(expenses) {
 // ---------------------------------------------------------
 // SIDEBAR WIDGETS
 // ---------------------------------------------------------
-function renderSummary(income, expenses) {
+function renderSummary(incomeEntries, expenses) {
+  const totalIncome = incomeEntries.reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
   const totalSpent = expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
-  const remaining = income - totalSpent;
+  const remaining = totalIncome - totalSpent;
 
-  plannedIncomeEl.textContent = formatCurrency(income);
+  plannedIncomeEl.textContent = formatCurrency(totalIncome);
   totalSpentEl.textContent = formatCurrency(totalSpent);
   remainingAmountEl.textContent = formatCurrency(remaining);
   remainingAmountEl.classList.toggle('negative', remaining < 0);
 
   // health ring
-  const pct = income > 0 ? Math.min(100, Math.max(0, (totalSpent / income) * 100)) : 0;
+  const pct = totalIncome > 0 ? Math.min(100, Math.max(0, (totalSpent / totalIncome) * 100)) : 0;
   const offset = HEALTH_RING_CIRCUMFERENCE - (pct / 100) * HEALTH_RING_CIRCUMFERENCE;
   healthRing.setAttribute('stroke-dasharray', HEALTH_RING_CIRCUMFERENCE.toFixed(1));
   healthRing.setAttribute('stroke-dashoffset', offset.toFixed(1));
@@ -388,21 +426,30 @@ function switchMonth(monthKey) {
   if (unsubIncome) unsubIncome();
   if (unsubExpenses) unsubExpenses();
 
-  currentIncome = 0;
+  currentIncomeEntries = [];
   currentExpenses = [];
+  let recurringChecked = false;
 
-  const monthRef = doc(db, monthDocPath(monthKey));
-  unsubIncome = onSnapshot(monthRef, (snap) => {
-    currentIncome = snap.exists() ? (snap.data().income || 0) : 0;
-    incomeInput.value = currentIncome || '';
-    renderSummary(currentIncome, currentExpenses);
+  const incomeRef = collection(db, monthIncomePath(monthKey));
+  unsubIncome = onSnapshot(incomeRef, (snap) => {
+    currentIncomeEntries = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderIncomeTable(currentIncomeEntries);
+    renderSummary(currentIncomeEntries, currentExpenses);
   });
 
   const expensesRef = collection(db, monthExpensesPath(monthKey));
   unsubExpenses = onSnapshot(expensesRef, (snap) => {
     currentExpenses = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderExpenseTable(currentExpenses);
-    renderSummary(currentIncome, currentExpenses);
+    renderSummary(currentIncomeEntries, currentExpenses);
+
+    // Only run the recurring auto-fill once per month-open, using the first
+    // snapshot as the "what's already here" baseline. Later snapshots just
+    // reflect our own additions coming back through the listener.
+    if (!recurringChecked) {
+      recurringChecked = true;
+      ensureRecurringAppliedToMonth(monthKey, currentExpenses);
+    }
   });
 }
 
@@ -412,8 +459,8 @@ function switchMonth(monthKey) {
 async function fullReset() {
   if (!confirm(`This will erase income and logged expenses for ${formatMonthLabel(selectedMonth)}. Continue?`)) return;
 
-  const monthRef = doc(db, monthDocPath(selectedMonth));
-  await setDoc(monthRef, { income: 0 }, { merge: false });
+  const income = await getDocs(collection(db, monthIncomePath(selectedMonth)));
+  await Promise.all(income.docs.map(d => deleteDoc(d.ref)));
 
   const expenses = await getDocs(collection(db, monthExpensesPath(selectedMonth)));
   await Promise.all(expenses.docs.map(d => deleteDoc(d.ref)));
@@ -422,8 +469,7 @@ async function fullReset() {
 // ---------------------------------------------------------
 // EVENT LISTENERS
 // ---------------------------------------------------------
-saveBudgetBtn.addEventListener('click', saveBudget);
-applyRecurringBtn.addEventListener('click', applyRecurringToMonth);
+addIncomeBtn.addEventListener('click', addIncome);
 addExpenseBtn.addEventListener('click', addExpense);
 fullResetBtn.addEventListener('click', fullReset);
 
@@ -439,6 +485,7 @@ monthInput.addEventListener('change', () => {
 // ---------------------------------------------------------
 paycheckAmountChip.textContent = formatCurrency(PAYCHECK_AMOUNT);
 expenseDate.value = todayISO();
+incomeDate.value = todayISO();
 renderNextPaycheck();
 applyPaycheckIfToday().then(() => {
   switchMonth(selectedMonth);
