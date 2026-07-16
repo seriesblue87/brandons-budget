@@ -285,14 +285,44 @@
       <!-- LEFT COLUMN -->
       <div>
         <div class="card glass">
-          <h2>Income</h2>
+          <h2>Add Income</h2>
           <div class="field-row">
             <div>
-              <label for="incomeInput">Total Income</label>
-              <input type="number" id="incomeInput" min="0" step="0.01" />
+              <input type="number" id="incomeInput" min="0" step="0.01" aria-label="Income amount" />
             </div>
             <div style="flex:0 0 auto;align-self:flex-end;">
-              <button class="btn-primary" id="saveBudgetBtn">Save Income</button>
+              <button class="btn-primary" id="saveBudgetBtn">Add Income</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card glass">
+          <h2>Add Expense</h2>
+          <div class="field-row">
+            <div>
+              <label for="expenseName">Name</label>
+              <input type="text" id="expenseName" />
+            </div>
+            <div>
+              <label for="expenseCategory">Category</label>
+              <select id="expenseCategory">
+                <option value="Food">Food</option>
+                <option value="Bills">Bills</option>
+                <option value="Entertainment">Entertainment</option>
+                <option value="Personal Care">Personal Care</option>
+                <option value="Gas">Gas</option>
+              </select>
+            </div>
+            <div>
+              <label for="expenseAmount">Amount</label>
+              <input type="number" id="expenseAmount" min="0" step="0.01" />
+            </div>
+            <div>
+              <label for="expenseDate">Date</label>
+              <input type="date" id="expenseDate" />
+            </div>
+            <div style="flex:0 0 auto;align-self:flex-end;">
+              <button class="btn-primary" id="addExpenseBtn">Add</button>
             </div>
           </div>
         </div>
@@ -330,37 +360,6 @@
 
           <div class="footer-actions">
             <button class="btn-secondary" id="applyRecurringBtn">Apply Recurring to This Month</button>
-          </div>
-        </div>
-
-        <div class="card glass">
-          <h2>Add Expense</h2>
-          <div class="field-row">
-            <div>
-              <label for="expenseName">Name</label>
-              <input type="text" id="expenseName" />
-            </div>
-            <div>
-              <label for="expenseCategory">Category</label>
-              <select id="expenseCategory">
-                <option value="Food">Food</option>
-                <option value="Bills">Bills</option>
-                <option value="Entertainment">Entertainment</option>
-                <option value="Personal Care">Personal Care</option>
-                <option value="Gas">Gas</option>
-              </select>
-            </div>
-            <div>
-              <label for="expenseAmount">Amount</label>
-              <input type="number" id="expenseAmount" min="0" step="0.01" />
-            </div>
-            <div>
-              <label for="expenseDate">Date</label>
-              <input type="date" id="expenseDate" />
-            </div>
-            <div style="flex:0 0 auto;align-self:flex-end;">
-              <button class="btn-primary" id="addExpenseBtn">Add</button>
-            </div>
           </div>
         </div>
 
