@@ -202,9 +202,4 @@ async function addExpense() {
     name, category, amount, date: today
   });
 
-  expenseName.value = "";
-  expenseAmount.value = "";
-}
-
-async function deleteExpense(id) {
-  await deleteDoc(doc(db, `users
+  expenseName.value
