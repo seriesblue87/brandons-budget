@@ -77,15 +77,10 @@ const expenseName = document.getElementById('expenseName');
 const expenseCategory = document.getElementById('expenseCategory');
 const expenseAmount = document.getElementById('expenseAmount');
 const expenseDate = document.getElementById('expenseDate');
+const expenseRecurringCheckbox = document.getElementById('expenseRecurringCheckbox');
 const addExpenseBtn = document.getElementById('addExpenseBtn');
-const expenseTableBody = document.getElementById('expenseTableBody');
-
-const recName = document.getElementById('recName');
-const recCategory = document.getElementById('recCategory');
-const recAmount = document.getElementById('recAmount');
-const addRecurringBtn = document.getElementById('addRecurringBtn');
 const applyRecurringBtn = document.getElementById('applyRecurringBtn');
-const recurringTableBody = document.getElementById('recurringTableBody');
+const expenseTableBody = document.getElementById('expenseTableBody');
 
 const fullResetBtn = document.getElementById('fullResetBtn');
 
@@ -184,73 +179,48 @@ async function saveBudget() {
 }
 
 // ---------------------------------------------------------
-// RECURRING EXPENSES (shared across all months)
+// RECURRING TEMPLATES (shared across all months, no separate table shown —
+// just a behind-the-scenes list used to seed future months)
 // ---------------------------------------------------------
-async function loadRecurring() {
+async function loadRecurringTemplates() {
   const colRef = collection(db, `users/${USER_ID}/recurring`);
   const snapshot = await getDocs(colRef);
   return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-async function addRecurring() {
-  const name = recName.value.trim();
-  const category = recCategory.value;
-  const amount = Number(recAmount.value);
+// Adds a template only if one with the same name doesn't already exist.
+async function ensureRecurringTemplate(name, category, amount) {
+  const existing = await loadRecurringTemplates();
+  const match = existing.find(r => r.name.toLowerCase() === name.toLowerCase());
+  if (match) return;
 
-  if (!name || !amount) return alert("Enter name + amount");
-
-  await addDoc(collection(db, `users/${USER_ID}/recurring`), {
-    name, category, amount
-  });
-
-  recName.value = "";
-  recAmount.value = "";
-
-  renderRecurring();
+  await addDoc(collection(db, `users/${USER_ID}/recurring`), { name, category, amount });
 }
 
-async function deleteRecurring(id) {
-  await deleteDoc(doc(db, `users/${USER_ID}/recurring/${id}`));
-  renderRecurring();
+// Removes any recurring template matching this name, so it won't be applied
+// to future months. Does not touch expenses already logged.
+async function removeRecurringTemplate(name) {
+  const existing = await loadRecurringTemplates();
+  const matches = existing.filter(r => r.name.toLowerCase() === name.toLowerCase());
+  await Promise.all(matches.map(m => deleteDoc(doc(db, `users/${USER_ID}/recurring/${m.id}`))));
 }
 
-async function renderRecurring() {
-  const recurring = await loadRecurring();
-  recurringTableBody.innerHTML = "";
-
-  if (recurring.length === 0) {
-    recurringTableBody.innerHTML = `<tr class="empty-row"><td colspan="4">No recurring expenses yet</td></tr>`;
-    return;
-  }
-
-  recurring.forEach(rec => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${rec.name}</td>
-      <td><span class="pill ${categoryClass(rec.category)}">${rec.category}</span></td>
-      <td class="right">${formatCurrency(rec.amount)}</td>
-      <td class="row-actions"><button class="btn-danger">Delete</button></td>
-    `;
-    tr.querySelector("button").onclick = () => deleteRecurring(rec.id);
-    recurringTableBody.appendChild(tr);
-  });
-}
-
-// ---------------------------------------------------------
-// APPLY RECURRING -> adds each recurring item into the currently selected month
-// ---------------------------------------------------------
+// Pulls in any recurring templates not already logged this month.
 async function applyRecurringToMonth() {
-  const recurring = await loadRecurring();
+  const templates = await loadRecurringTemplates();
+  const existingNames = new Set(currentExpenses.map(e => e.name.toLowerCase()));
   const dateForEntry = selectedMonth === todayISO().slice(0, 7)
     ? todayISO()
     : `${selectedMonth}-01`;
 
-  for (const rec of recurring) {
+  for (const rec of templates) {
+    if (existingNames.has(rec.name.toLowerCase())) continue;
     await addDoc(collection(db, monthExpensesPath(selectedMonth)), {
       name: rec.name,
       category: rec.category,
       amount: rec.amount,
-      date: dateForEntry
+      date: dateForEntry,
+      recurring: true
     });
   }
 }
@@ -263,20 +233,31 @@ async function addExpense() {
   const category = expenseCategory.value;
   const amount = Number(expenseAmount.value);
   const date = expenseDate.value || todayISO();
+  const recurring = expenseRecurringCheckbox.checked;
 
   if (!name || !amount) return alert("Enter name + amount");
 
   await addDoc(collection(db, monthExpensesPath(selectedMonth)), {
-    name, category, amount, date
+    name, category, amount, date, recurring
   });
+
+  if (recurring) {
+    await ensureRecurringTemplate(name, category, amount);
+  }
 
   expenseName.value = "";
   expenseAmount.value = "";
   expenseDate.value = todayISO();
+  expenseRecurringCheckbox.checked = false;
 }
 
 async function deleteExpense(id) {
   await deleteDoc(doc(db, `${monthExpensesPath(selectedMonth)}/${id}`));
+}
+
+async function stopRecurring(name) {
+  if (!confirm(`Stop treating "${name}" as recurring? It will no longer be added to future months automatically.`)) return;
+  await removeRecurringTemplate(name);
 }
 
 function renderExpenseTable(expenses) {
@@ -292,14 +273,31 @@ function renderExpenseTable(expenses) {
 
   sorted.forEach(exp => {
     const tr = document.createElement("tr");
+    const recurringBadge = exp.recurring ? `<span class="pill-recurring">Recurring</span>` : '';
     tr.innerHTML = `
       <td>${formatDisplayDate(exp.date)}</td>
       <td>${exp.name}</td>
-      <td><span class="pill ${categoryClass(exp.category)}">${exp.category}</span></td>
+      <td><span class="pill ${categoryClass(exp.category)}">${exp.category}</span>${recurringBadge}</td>
       <td class="right">${formatCurrency(exp.amount)}</td>
-      <td class="row-actions"><button class="btn-danger">Delete</button></td>
+      <td class="row-actions"></td>
     `;
-    tr.querySelector("button").onclick = () => deleteExpense(exp.id);
+    const actionsCell = tr.querySelector('.row-actions');
+
+    if (exp.recurring) {
+      const stopBtn = document.createElement('button');
+      stopBtn.className = 'btn-ghost';
+      stopBtn.textContent = 'Stop Recurring';
+      stopBtn.style.marginRight = '0.4rem';
+      stopBtn.onclick = () => stopRecurring(exp.name);
+      actionsCell.appendChild(stopBtn);
+    }
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'btn-danger';
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.onclick = () => deleteExpense(exp.id);
+    actionsCell.appendChild(deleteBtn);
+
     expenseTableBody.appendChild(tr);
   });
 }
@@ -425,7 +423,6 @@ async function fullReset() {
 // EVENT LISTENERS
 // ---------------------------------------------------------
 saveBudgetBtn.addEventListener('click', saveBudget);
-addRecurringBtn.addEventListener('click', addRecurring);
 applyRecurringBtn.addEventListener('click', applyRecurringToMonth);
 addExpenseBtn.addEventListener('click', addExpense);
 fullResetBtn.addEventListener('click', fullReset);
@@ -445,5 +442,4 @@ expenseDate.value = todayISO();
 renderNextPaycheck();
 applyPaycheckIfToday().then(() => {
   switchMonth(selectedMonth);
-  renderRecurring();
 });
