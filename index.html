@@ -236,14 +236,15 @@
   }
   .recurring-check input{width:auto;accent-color:var(--iris-2);cursor:pointer;}
 
-  .pill-recurring{
-    display:inline-flex;align-items:center;gap:0.3rem;
-    padding:0.2rem 0.55rem;border-radius:999px;margin-left:0.4rem;
-    font-size:0.68rem;font-weight:600;
+  .recurring-icon{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:1.4rem;height:1.4rem;margin-left:0.4rem;border-radius:50%;
     background:rgba(185,139,255,0.16);color:#d3c2ff;
     border:1px solid rgba(185,139,255,0.3);
+    font-size:0.8rem;cursor:pointer;flex:0 0 auto;
+    vertical-align:middle;
   }
-  .pill-recurring::before{content:"↻";font-size:0.8em;}
+  .recurring-icon:hover{background:rgba(185,139,255,0.28);}
 </style>
 </head>
 
