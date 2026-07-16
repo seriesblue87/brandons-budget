@@ -310,31 +310,20 @@ function renderExpenseTable(expenses) {
 
   sorted.forEach(exp => {
     const tr = document.createElement("tr");
-    const recurringBadge = exp.recurring ? `<span class="pill-recurring">Recurring</span>` : '';
+    const recurringIcon = exp.recurring
+      ? `<span class="recurring-icon" title="Recurring — click to stop">↻</span>`
+      : '';
     tr.innerHTML = `
       <td>${formatDisplayDate(exp.date)}</td>
       <td>${exp.name}</td>
-      <td><span class="pill ${categoryClass(exp.category)}">${exp.category}</span>${recurringBadge}</td>
+      <td><span class="pill ${categoryClass(exp.category)}">${exp.category}</span>${recurringIcon}</td>
       <td class="right">${formatCurrency(exp.amount)}</td>
-      <td class="row-actions"></td>
+      <td class="row-actions"><button class="btn-danger">Delete</button></td>
     `;
-    const actionsCell = tr.querySelector('.row-actions');
-
     if (exp.recurring) {
-      const stopBtn = document.createElement('button');
-      stopBtn.className = 'btn-ghost';
-      stopBtn.textContent = 'Stop Recurring';
-      stopBtn.style.marginRight = '0.4rem';
-      stopBtn.onclick = () => stopRecurring(exp.name);
-      actionsCell.appendChild(stopBtn);
+      tr.querySelector('.recurring-icon').onclick = () => stopRecurring(exp.name);
     }
-
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'btn-danger';
-    deleteBtn.textContent = 'Delete';
-    deleteBtn.onclick = () => deleteExpense(exp.id);
-    actionsCell.appendChild(deleteBtn);
-
+    tr.querySelector('.btn-danger').onclick = () => deleteExpense(exp.id);
     expenseTableBody.appendChild(tr);
   });
 }
