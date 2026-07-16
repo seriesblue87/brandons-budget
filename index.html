@@ -1,342 +1,428 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Brandon's Budget</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="UTF-8" />
+<title>Brandon's Budget</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <!-- PREMIUM DARK GLASSMORPHISM THEME -->
-  <style>
-    * {
-      box-sizing: border-box;
-      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-    }
+<style>
+  :root{
+    --bg-0:#040507;
+    --bg-1:#07090d;
+    --bg-2:#0a0d12;
+    --glass:rgba(255,255,255,0.025);
+    --glass-strong:rgba(255,255,255,0.05);
+    --glass-border:rgba(255,255,255,0.14);
+    --iris-1:#7cf5ff;
+    --iris-2:#b98bff;
+    --iris-3:#ff8bd0;
+    --iris-4:#8bffcf;
+    --amber:#7cf5ff;
+    --amber-2:#b98bff;
+    --green:#8bffcf;
+    --red:#ff6b8b;
+    --text:#f5f8ff;
+    --text-dim:#93a0bd;
+    --text-faint:#57617c;
+    --radius:1.1rem;
+  }
 
-    body {
-      margin: 0;
-      padding: 2rem;
-      background: radial-gradient(circle at top, #0f1115, #0b0d10 40%, #08090c 100%);
-      color: #f1f5f9;
-    }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:"Inter",system-ui,sans-serif;
+    color:var(--text);
+    min-height:100vh;
+    background:var(--bg-0);
+    padding:2.5rem 1.5rem 4rem;
+    position:relative;
+    overflow-x:hidden;
+  }
 
-    h1 {
-      margin-bottom: 0.25rem;
-      font-weight: 700;
-      font-size: 1.9rem;
-      letter-spacing: -0.5px;
-      color: #ffffff;
-    }
+  /* prism ambient glow behind the clear glass panels */
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    z-index:0;
+    background:
+      radial-gradient(560px 560px at 8% 4%, rgba(124,245,255,0.18), transparent 60%),
+      radial-gradient(620px 620px at 96% 10%, rgba(185,139,255,0.16), transparent 65%),
+      radial-gradient(600px 600px at 85% 92%, rgba(255,139,208,0.13), transparent 62%),
+      radial-gradient(760px 760px at 6% 88%, rgba(139,255,207,0.10), transparent 68%),
+      linear-gradient(180deg, var(--bg-1), var(--bg-0) 45%, var(--bg-2));
+  }
+  /* faint grid, kept very quiet so glass reads as truly see-through */
+  body::after{
+    content:"";
+    position:fixed;
+    inset:0;
+    z-index:0;
+    pointer-events:none;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size:46px 46px, 46px 46px;
+  }
 
-    h2 {
-      margin-top: 1.5rem;
-      margin-bottom: 0.75rem;
-      font-size: 1.3rem;
-      font-weight: 600;
-      color: #e2e8f0;
-    }
+  .wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;}
 
-    /* TRUE GLASS PANEL */
-    .glass {
-      background: rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(22px) saturate(180%);
-      -webkit-backdrop-filter: blur(22px) saturate(180%);
-      border-radius: 1rem;
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      box-shadow:
-        0 8px 25px rgba(0, 0, 0, 0.45),
-        inset 0 0 0.5px rgba(255, 255, 255, 0.4);
-    }
+  h1,h2,h3{font-family:"Space Grotesk",sans-serif;margin:0;}
+  .stat-value,.ring-pct,.next-pay-days,.stat-value#nextPayDate{font-family:"JetBrains Mono","Space Grotesk",monospace;}
+  h1{text-shadow:0 0 20px rgba(124,245,255,0.3), 0 0 36px rgba(185,139,255,0.18);}
 
-    .container {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 2rem;
-    }
+  .glass{
+    position:relative;
+    background:var(--glass);
+    backdrop-filter:blur(26px) saturate(140%);
+    -webkit-backdrop-filter:blur(26px) saturate(140%);
+    border:1px solid transparent;
+    border-radius:var(--radius);
+    isolation:isolate;
+  }
+  /* holographic gradient border, drawn as a masked pseudo-layer so the panel stays truly transparent */
+  .glass::before{
+    content:"";
+    position:absolute;inset:0;
+    border-radius:inherit;
+    padding:1px;
+    background:linear-gradient(135deg, rgba(124,245,255,0.55), rgba(185,139,255,0.4), rgba(255,139,208,0.35), rgba(139,255,207,0.4));
+    -webkit-mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite:xor;
+    mask-composite:exclude;
+    pointer-events:none;
+    z-index:1;
+  }
+  /* glossy diagonal highlight, like light catching the surface of glass */
+  .glass::after{
+    content:"";
+    position:absolute;inset:0;
+    border-radius:inherit;
+    background:linear-gradient(120deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.02) 30%, transparent 55%);
+    pointer-events:none;
+    z-index:1;
+  }
+  .glass > *{position:relative;z-index:2;}
 
-    .row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      margin-bottom: 1rem;
-    }
+  /* header */
+  .top{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    flex-wrap:wrap;gap:1rem;margin-bottom:1.75rem;
+  }
+  .top h1{font-size:2rem;font-weight:800;letter-spacing:-0.5px;}
+  .top .eyebrow{
+    font-size:0.78rem;color:var(--text-faint);text-transform:uppercase;
+    letter-spacing:0.12em;margin-bottom:0.35rem;
+  }
+  .paycheck-chip{
+    display:inline-flex;align-items:center;gap:0.5rem;
+    padding:0.55rem 1rem;border-radius:999px;
+    background:linear-gradient(135deg, rgba(124,245,255,0.14), rgba(185,139,255,0.10), rgba(255,139,208,0.08));
+    border:1px solid rgba(255,255,255,0.18);
+    color:#e6f6ff;font-size:0.85rem;font-weight:600;
+    font-family:"JetBrains Mono",monospace;
+  }
+  .paycheck-chip .dot{width:6px;height:6px;border-radius:50%;background:var(--iris-1);box-shadow:0 0 8px var(--iris-1);}
 
-    .row > div {
-      flex: 1 1 220px;
-    }
+  .month-nav{
+    display:flex;align-items:center;gap:0.65rem;
+    padding:0.55rem 0.75rem;margin-bottom:1.5rem;width:fit-content;
+  }
+  .month-nav #monthInput{
+    width:auto;padding:0.4rem 0.6rem;border:none;background:transparent;
+    font-family:"JetBrains Mono",monospace;font-size:0.9rem;text-align:center;
+  }
+  .month-nav #monthInput:focus{box-shadow:none;border:none;}
+  .month-nav button{padding:0.4rem 0.7rem;line-height:1;}
+  .month-nav #prevMonthBtn,.month-nav #nextMonthBtn{font-size:1.1rem;padding:0.35rem 0.65rem;}
+  .month-nav #todayMonthBtn{font-size:0.78rem;}
 
-    .header-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
+  .glass{box-shadow:0 8px 32px rgba(0,0,0,0.5), 0 0 30px rgba(124,245,255,0.04);}
 
-    label {
-      display: block;
-      font-size: 0.85rem;
-      margin-bottom: 0.25rem;
-      color: #94a3b8;
-    }
+  /* stat row */
+  .stats{display:flex;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem;}
+  .stat-card{
+    flex:1 1 220px;display:flex;align-items:center;gap:0.9rem;
+    padding:1.1rem 1.25rem;
+  }
+  .stat-icon{
+    width:44px;height:44px;border-radius:50%;flex:0 0 auto;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,0.08);
+  }
+  .stat-icon svg{width:20px;height:20px;}
+  .stat-card.income .stat-icon{background:rgba(139,255,207,0.14);color:var(--green);}
+  .stat-card.spent .stat-icon{background:rgba(255,107,139,0.14);color:var(--red);}
+  .stat-card.remaining .stat-icon{background:rgba(124,245,255,0.16);color:var(--iris-1);}
+  .stat-label{font-size:0.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.15rem;}
+  .stat-value{font-size:1.35rem;font-weight:700;font-family:"JetBrains Mono","Space Grotesk",monospace;}
+  .stat-value.negative{color:var(--red);}
 
-    input, select {
-      width: 100%;
-      padding: 0.65rem 0.75rem;
-      border-radius: 0.6rem;
-      border: 1px solid rgba(255,255,255,0.15);
-      font-size: 0.95rem;
-      background: rgba(255,255,255,0.08);
-      color: #f8fafc;
-      transition: all 0.15s ease;
-    }
+  /* layout grid */
+  .grid{display:grid;grid-template-columns:1.6fr 1fr;gap:1.25rem;align-items:start;}
+  @media (max-width:860px){.grid{grid-template-columns:1fr;}}
 
-    input:focus, select:focus {
-      outline: none;
-      border-color: #f59e0b;
-      box-shadow: 0 0 0 3px rgba(245,158,11,0.25);
-      background: rgba(255,255,255,0.12);
-    }
+  .card{padding:1.5rem;margin-bottom:1.25rem;}
+  .card h2{font-size:1.05rem;font-weight:700;margin-bottom:1rem;color:#eef3fb;}
 
-    button {
-      border: none;
-      border-radius: 0.6rem;
-      padding: 0.65rem 1.1rem;
-      font-size: 0.95rem;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
+  .field-row{display:flex;flex-wrap:wrap;gap:0.85rem;margin-bottom:0.9rem;}
+  .field-row > div{flex:1 1 160px;}
+  label{display:block;font-size:0.78rem;color:var(--text-dim);margin-bottom:0.3rem;}
+  input,select{
+    width:100%;padding:0.6rem 0.75rem;border-radius:0.6rem;
+    border:1px solid rgba(255,255,255,0.14);
+    background:rgba(255,255,255,0.03);color:var(--text);
+    font-size:0.92rem;font-family:"Inter",sans-serif;
+    color-scheme:dark;
+  }
+  input:focus,select:focus{
+    outline:none;border-color:rgba(124,245,255,0.55);
+    box-shadow:0 0 0 3px rgba(124,245,255,0.15);
+  }
 
-    button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 14px rgba(0,0,0,0.4);
-    }
+  button{
+    border:none;border-radius:0.65rem;padding:0.6rem 1.1rem;
+    font-size:0.88rem;font-weight:600;cursor:pointer;
+    font-family:"Inter",sans-serif;transition:transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  button:hover{transform:translateY(-1px);}
+  .btn-primary{background:linear-gradient(135deg,var(--iris-1),var(--iris-2) 55%,var(--iris-3));color:#04070d;box-shadow:0 0 18px rgba(185,139,255,0.3);}
+  .btn-secondary{background:rgba(255,255,255,0.06);color:var(--text);border:1px solid rgba(255,255,255,0.16);}
+  .btn-danger{background:rgba(255,107,139,0.8);color:#fff;}
+  .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.14);color:var(--text-dim);}
 
-    .btn-primary {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      color: #1e1e1e;
-      font-weight: 600;
-    }
+  table{width:100%;border-collapse:collapse;margin-top:0.5rem;}
+  th,td{padding:0.6rem 0.5rem;font-size:0.86rem;border-bottom:1px solid rgba(255,255,255,0.07);text-align:left;}
+  th{color:var(--text-dim);font-weight:600;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.05em;}
+  td.right, th.right{text-align:right;}
+  .empty-row td{color:var(--text-faint);text-align:center;padding:1.25rem;font-style:italic;}
 
-    .btn-secondary {
-      background: rgba(255,255,255,0.12);
-      color: #e2e8f0;
-    }
+  .pill{
+    display:inline-block;padding:0.25rem 0.65rem;border-radius:999px;
+    font-size:0.72rem;font-weight:600;background:rgba(255,255,255,0.1);color:var(--text);
+  }
+  .pill.Food{background:rgba(139,255,207,0.14);color:#9dffdf;}
+  .pill.Bills{background:rgba(255,107,139,0.14);color:#ffa3b8;}
+  .pill.Entertainment{background:rgba(185,139,255,0.16);color:#c9b3ff;}
+  .pill.Personal.Care{background:rgba(255,139,208,0.14);color:#ffb8e6;}
+  .pill.Gas{background:rgba(124,245,255,0.16);color:#a6f2ff;}
 
-    .btn-danger {
-      background: #ef4444;
-      color: #ffffff;
-    }
+  .row-actions button{padding:0.3rem 0.6rem;font-size:0.75rem;}
 
-    .summary {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      margin: 1.5rem 0;
-    }
+  /* sidebar widgets */
+  .ring-wrap{display:flex;align-items:center;gap:1.25rem;}
+  .ring-wrap svg{flex:0 0 auto;transform:rotate(-90deg);}
+  .ring-label{font-size:0.78rem;color:var(--text-dim);margin-bottom:0.2rem;}
+  .ring-pct{font-size:1.6rem;font-weight:800;font-family:"JetBrains Mono","Space Grotesk",monospace;}
+  .ring-sub{font-size:0.8rem;color:var(--text-faint);margin-top:0.15rem;}
 
-    .card {
-      flex: 1 1 180px;
-      padding: 1rem 1.2rem;
-    }
+  .cat-bar-row{margin-bottom:0.85rem;}
+  .cat-bar-top{display:flex;justify-content:space-between;font-size:0.82rem;margin-bottom:0.3rem;color:var(--text-dim);}
+  .cat-bar-track{height:7px;border-radius:999px;background:rgba(255,255,255,0.08);overflow:hidden;}
+  .cat-bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--iris-1),var(--iris-2),var(--iris-3));}
+  .cat-empty{color:var(--text-faint);font-size:0.85rem;font-style:italic;}
 
-    .card-title {
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: #cbd5e1;
-      margin-bottom: 0.35rem;
-    }
+  .next-pay-row{display:flex;justify-content:space-between;align-items:center;}
+  .next-pay-days{font-size:1.7rem;font-weight:800;font-family:"JetBrains Mono","Space Grotesk",monospace;color:var(--amber);}
 
-    .card-value {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: #ffffff;
-    }
-
-    .card.good {
-      border-color: rgba(34,197,94,0.4);
-      background: rgba(34,197,94,0.15);
-    }
-
-    .card.bad {
-      border-color: rgba(239,68,68,0.4);
-      background: rgba(239,68,68,0.15);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 0.75rem;
-      border-radius: 0.75rem;
-      overflow: hidden;
-      background: rgba(255,255,255,0.04);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-    }
-
-    th, td {
-      padding: 0.65rem;
-      font-size: 0.9rem;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      text-align: left;
-      color: #e2e8f0;
-    }
-
-    th {
-      background: rgba(255,255,255,0.08);
-      font-weight: 600;
-    }
-
-    tr:nth-child(even) td {
-      background: rgba(255,255,255,0.04);
-    }
-
-    .right {
-      text-align: right;
-    }
-
-    .category-pill {
-      display: inline-block;
-      padding: 0.25rem 0.6rem;
-      border-radius: 999px;
-      font-size: 0.75rem;
-      background: rgba(255,255,255,0.12);
-      color: #f8fafc;
-    }
-
-    .pill-info {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      padding: 0.35rem 0.75rem;
-      border-radius: 999px;
-      background: rgba(245,158,11,0.15);
-      color: #fbbf24;
-      font-size: 0.8rem;
-      font-weight: 500;
-    }
-  </style>
+  .footer-actions{display:flex;justify-content:flex-end;margin-top:1rem;}
+</style>
 </head>
 
 <body>
-  <div class="container glass">
-    <div class="header-row">
+  <div class="wrap">
+
+    <div class="top">
       <div>
+        <div class="eyebrow">Overview</div>
         <h1>Brandon's Budget</h1>
-        <div class="pill-info">Biweekly Paycheck: $1,937.04</div>
+      </div>
+      <div class="paycheck-chip"><span class="dot"></span> Biweekly paycheck &nbsp;<strong id="paycheckAmountChip">$1,937.04</strong></div>
+    </div>
+
+    <div class="month-nav glass">
+      <button class="btn-ghost" id="prevMonthBtn" aria-label="Previous month" type="button">&#8249;</button>
+      <input type="month" id="monthInput" />
+      <button class="btn-ghost" id="nextMonthBtn" aria-label="Next month" type="button">&#8250;</button>
+      <button class="btn-secondary" id="todayMonthBtn" type="button">This Month</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card income glass">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18M3 12h18M3 17h18"/></svg>
+        </div>
+        <div>
+          <div class="stat-label">Total Income</div>
+          <div class="stat-value" id="plannedIncome">$0.00</div>
+        </div>
+      </div>
+
+      <div class="stat-card spent glass">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v4H4zM4 10h16v10H4z"/></svg>
+        </div>
+        <div>
+          <div class="stat-label">Total Spent</div>
+          <div class="stat-value" id="totalSpent">$0.00</div>
+        </div>
+      </div>
+
+      <div class="stat-card remaining glass">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        </div>
+        <div>
+          <div class="stat-label">Remaining</div>
+          <div class="stat-value" id="remainingAmount">$0.00</div>
+        </div>
       </div>
     </div>
 
-    <h2>Income</h2>
-    <div class="row">
+    <div class="grid">
+      <!-- LEFT COLUMN -->
       <div>
-        <label for="incomeInput">Total Income</label>
-        <input type="number" id="incomeInput" min="0" step="0.01" />
+        <div class="card glass">
+          <h2>Income</h2>
+          <div class="field-row">
+            <div>
+              <label for="incomeInput">Total Income</label>
+              <input type="number" id="incomeInput" min="0" step="0.01" />
+            </div>
+            <div style="flex:0 0 auto;align-self:flex-end;">
+              <button class="btn-primary" id="saveBudgetBtn">Save Income</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card glass">
+          <h2>Recurring Expenses</h2>
+          <div class="field-row">
+            <div>
+              <label for="recName">Name</label>
+              <input type="text" id="recName" />
+            </div>
+            <div>
+              <label for="recCategory">Category</label>
+              <select id="recCategory">
+                <option value="Food">Food</option>
+                <option value="Bills">Bills</option>
+                <option value="Entertainment">Entertainment</option>
+                <option value="Personal Care">Personal Care</option>
+                <option value="Gas">Gas</option>
+              </select>
+            </div>
+            <div>
+              <label for="recAmount">Amount</label>
+              <input type="number" id="recAmount" min="0" step="0.01" />
+            </div>
+            <div style="flex:0 0 auto;align-self:flex-end;">
+              <button class="btn-primary" id="addRecurringBtn">Add</button>
+            </div>
+          </div>
+
+          <table>
+            <thead><tr><th>Name</th><th>Category</th><th class="right">Amount</th><th></th></tr></thead>
+            <tbody id="recurringTableBody"></tbody>
+          </table>
+
+          <div class="footer-actions">
+            <button class="btn-secondary" id="applyRecurringBtn">Apply Recurring to This Month</button>
+          </div>
+        </div>
+
+        <div class="card glass">
+          <h2>Add Expense</h2>
+          <div class="field-row">
+            <div>
+              <label for="expenseName">Name</label>
+              <input type="text" id="expenseName" />
+            </div>
+            <div>
+              <label for="expenseCategory">Category</label>
+              <select id="expenseCategory">
+                <option value="Food">Food</option>
+                <option value="Bills">Bills</option>
+                <option value="Entertainment">Entertainment</option>
+                <option value="Personal Care">Personal Care</option>
+                <option value="Gas">Gas</option>
+              </select>
+            </div>
+            <div>
+              <label for="expenseAmount">Amount</label>
+              <input type="number" id="expenseAmount" min="0" step="0.01" />
+            </div>
+            <div>
+              <label for="expenseDate">Date</label>
+              <input type="date" id="expenseDate" />
+            </div>
+            <div style="flex:0 0 auto;align-self:flex-end;">
+              <button class="btn-primary" id="addExpenseBtn">Add</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card glass">
+          <h2>Expenses</h2>
+          <table>
+            <thead><tr><th>Date</th><th>Name</th><th>Category</th><th class="right">Amount</th><th></th></tr></thead>
+            <tbody id="expenseTableBody"></tbody>
+          </table>
+        </div>
       </div>
+
+      <!-- RIGHT COLUMN / SIDEBAR -->
       <div>
-        <label>&nbsp;</label>
-        <button class="btn-primary" id="saveBudgetBtn">Save Income</button>
+        <div class="card glass">
+          <h2>Budget Health</h2>
+          <div class="ring-wrap">
+            <svg width="110" height="110" viewBox="0 0 110 110">
+              <defs>
+                <linearGradient id="iridGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#7cf5ff"/>
+                  <stop offset="50%" stop-color="#b98bff"/>
+                  <stop offset="100%" stop-color="#ff8bd0"/>
+                </linearGradient>
+              </defs>
+              <circle cx="55" cy="55" r="46" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="10"/>
+              <circle id="healthRing" cx="55" cy="55" r="46" fill="none" stroke="url(#iridGrad)" stroke-width="10"
+                stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="289"/>
+            </svg>
+            <div>
+              <div class="ring-label">Spent of income</div>
+              <div class="ring-pct" id="healthPct">0%</div>
+              <div class="ring-sub" id="healthSub">$0.00 remaining</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card glass">
+          <h2>Spending by Category</h2>
+          <div id="categoryBreakdown"><div class="cat-empty">No expenses logged yet</div></div>
+        </div>
+
+        <div class="card glass">
+          <h2>Next Paycheck</h2>
+          <div class="next-pay-row">
+            <div>
+              <div class="ring-label">Days away</div>
+              <div class="next-pay-days" id="nextPayDays">—</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="ring-label">Date</div>
+              <div class="stat-value" id="nextPayDate" style="font-size:1rem;">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card glass">
+          <button class="btn-danger" id="fullResetBtn" style="width:100%;">Reset Everything</button>
+        </div>
       </div>
     </div>
 
-    <div class="summary">
-      <div class="card glass">
-        <div class="card-title">Total Income</div>
-        <div class="card-value" id="plannedIncome">$0.00</div>
-      </div>
-
-      <div class="card glass">
-        <div class="card-title">Total Spent</div>
-        <div class="card-value" id="totalSpent">$0.00</div>
-      </div>
-
-      <div class="card glass" id="remainingCard">
-        <div class="card-title">Remaining</div>
-        <div class="card-value" id="remainingAmount">$0.00</div>
-      </div>
-    </div>
-
-    <button class="btn-danger" id="fullResetBtn">Reset Everything</button>
-
-    <h2>Recurring Expenses</h2>
-    <div class="row">
-      <div>
-        <label for="recName">Name</label>
-        <input type="text" id="recName" />
-      </div>
-      <div>
-        <label for="recCategory">Category</label>
-        <select id="recCategory">
-          <option value="Food">Food</option>
-          <option value="Bills">Bills</option>
-          <option value="Entertainment">Entertainment</option>
-          <option value="Personal Care">Personal Care</option>
-          <option value="Gas">Gas</option>
-        </select>
-      </div>
-      <div>
-        <label for="recAmount">Amount</label>
-        <input type="number" id="recAmount" min="0" step="0.01" />
-      </div>
-      <div>
-        <label>&nbsp;</label>
-        <button class="btn-primary" id="addRecurringBtn">Add Recurring</button>
-      </div>
-    </div>
-
-    <button class="btn-secondary" id="applyRecurringBtn">Apply Recurring</button>
-
-    <table class="glass">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Category</th>
-          <th class="right">Amount</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="recurringTableBody"></tbody>
-    </table>
-
-    <h2>Add Expense</h2>
-    <div class="row">
-      <div>
-        <label for="expenseName">Name</label>
-        <input type="text" id="expenseName" />
-      </div>
-      <div>
-        <label for="expenseCategory">Category</label>
-        <select id="expenseCategory">
-          <option value="Food">Food</option>
-          <option value="Bills">Bills</option>
-          <option value="Entertainment">Entertainment</option>
-          <option value="Personal Care">Personal Care</option>
-          <option value="Gas">Gas</option>
-        </select>
-      </div>
-      <div>
-        <label for="expenseAmount">Amount</label>
-        <input type="number" id="expenseAmount" min="0" step="0.01" />
-      </div>
-      <div>
-        <label>&nbsp;</label>
-        <button class="btn-primary" id="addExpenseBtn">Add Expense</button>
-      </div>
-    </div>
-
-    <h2>Expenses</h2>
-    <table class="glass">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Name</th>
-          <th>Category</th>
-          <th class="right">Amount</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="expenseTableBody"></tbody>
-    </table>
   </div>
 
   <script type="module" src="app.js"></script>
