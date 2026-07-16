@@ -16,18 +16,18 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // ---------------------------------------------------------
-// Firebase config (paste your real config here)
+// Firebase config
 // ---------------------------------------------------------
 const firebaseConfig = {
-    apiKey: "AIzaSyCnM9sStBexhjE4-z906mNZq5nu3L_rYuQ",
-    authDomain: "brandons-budget.firebaseapp.com",
-    databaseURL: "https://brandons-budget-default-rtdb.firebaseio.com",
-    projectId: "brandons-budget",
-    storageBucket: "brandons-budget.firebasestorage.app",
-    messagingSenderId: "135609004884",
-    appId: "1:135609004884:web:ec9ff9cb3ce75c02d38ec1",
-    measurementId: "G-ZTL2FHJTKW"
-  };
+  apiKey: "AIzaSyCnM9sStBexhjE4-z906mNZq5nu3L_rYuQ",
+  authDomain: "brandons-budget.firebaseapp.com",
+  databaseURL: "https://brandons-budget-default-rtdb.firebaseio.com",
+  projectId: "brandons-budget",
+  storageBucket: "brandons-budget.firebasestorage.app",
+  messagingSenderId: "135609004884",
+  appId: "1:135609004884:web:ec9ff9cb3ce75c02d38ec1",
+  measurementId: "G-ZTL2FHJTKW"
+};
 
 // ---------------------------------------------------------
 // Init Firebase + Firestore
@@ -40,16 +40,25 @@ const db = getFirestore(app);
 // ---------------------------------------------------------
 const USER_ID = "default"; // no login needed
 
+// Biweekly paycheck: $1937.04 every other Wednesday starting 2026-07-22
+const PAYCHECK_AMOUNT = 1937.04;
+const FIRST_PAYDAY = new Date("2026-07-22");
+
 // ---------------------------------------------------------
-// DOM ELEMENTS (same as your original script)
+// DOM ELEMENTS
 // ---------------------------------------------------------
 const monthSelect = document.getElementById('monthSelect');
 const incomeInput = document.getElementById('incomeInput');
+const savingsGoalInput = document.getElementById('savingsGoalInput');
 const saveBudgetBtn = document.getElementById('saveBudgetBtn');
 const plannedIncomeEl = document.getElementById('plannedIncome');
 const totalSpentEl = document.getElementById('totalSpent');
 const remainingAmountEl = document.getElementById('remainingAmount');
 const remainingCard = document.getElementById('remainingCard');
+const savingsProgressEl = document.getElementById('savingsProgress');
+const savingsStatusTextEl = document.getElementById('savingsStatusText');
+const paycheckSummarySmall = document.getElementById('paycheckSummarySmall');
+const paycheckTableBody = document.getElementById('paycheckTableBody');
 
 const expenseName = document.getElementById('expenseName');
 const expenseCategory = document.getElementById('expenseCategory');
@@ -74,6 +83,52 @@ function getMonthKey() {
 
 function formatCurrency(num) {
   return '$' + (Number(num) || 0).toFixed(2);
+}
+
+function formatDateISO(date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function getYearMonthFromDate(date) {
+  return date.toISOString().slice(0, 7);
+}
+
+// Generate all paydays for a given month (yyyy-mm)
+function getPaydaysForMonth(monthKey) {
+  const [yearStr, monthStr] = monthKey.split("-");
+  const targetYear = Number(yearStr);
+  const targetMonth = Number(monthStr); // 1-12
+
+  const paydays = [];
+  let d = new Date(FIRST_PAYDAY);
+
+  // Loop forward until we pass the target month/year by a bit
+  while (getYearMonthFromDate(d) <= `${targetYear}-${String(targetMonth).padStart(2, "0")}` || d.getFullYear() <= targetYear + 1) {
+    const ym = getYearMonthFromDate(d);
+    const [y, m] = ym.split("-");
+    const yNum = Number(y);
+    const mNum = Number(m);
+
+    if (yNum === targetYear && mNum === targetMonth) {
+      paydays.push(new Date(d));
+    }
+
+    // Move to next paycheck (every 14 days)
+    d.setDate(d.getDate() + 14);
+
+    // Stop if we've gone far beyond the target year
+    if (yNum > targetYear + 1) break;
+  }
+
+  return paydays;
+}
+
+// Check if today is a payday
+function isTodayPayday() {
+  const today = new Date();
+  const todayStr = formatDateISO(today);
+  const paydaysForMonth = getPaydaysForMonth(getMonthKey());
+  return paydaysForMonth.some(pd => formatDateISO(pd) === todayStr);
 }
 
 // ---------------------------------------------------------
@@ -104,8 +159,7 @@ async function addRecurring() {
   recName.value = "";
   recAmount.value = "";
   
-  await renderRecurring();   // ← THIS MAKES THE LIST UPDATE IMMEDIATELY
-  
+  await renderRecurring();
 }
 
 async function deleteRecurring(id) {
@@ -133,14 +187,33 @@ async function renderRecurring() {
 }
 
 // ---------------------------------------------------------
-// FIRESTORE: MONTH INCOME
+// FIRESTORE: MONTH INCOME + SAVINGS GOAL
 // ---------------------------------------------------------
+async function ensureMonthIncomeFromPaychecks(monthKey) {
+  const monthRef = doc(db, `users/${USER_ID}/months/${monthKey}`);
+  const snap = await getDoc(monthRef);
+
+  const paydays = getPaydaysForMonth(monthKey);
+  const autoIncome = paydays.length * PAYCHECK_AMOUNT;
+
+  // Only auto-set if no income yet (or zero)
+  if (!snap.exists() || !snap.data().income) {
+    await setDoc(monthRef, {
+      income: autoIncome
+    }, { merge: true });
+  }
+}
+
 async function saveBudget() {
   const monthKey = getMonthKey();
   const monthRef = doc(db, `users/${USER_ID}/months/${monthKey}`);
 
+  const income = Number(incomeInput.value) || 0;
+  const savingsGoal = Number(savingsGoalInput.value) || 0;
+
   await setDoc(monthRef, {
-    income: Number(incomeInput.value) || 0
+    income,
+    savingsGoal
   }, { merge: true });
 }
 
@@ -203,9 +276,10 @@ async function clearMonth() {
 
   const monthKey = getMonthKey();
 
-  // Reset income
+  // Reset income & savings goal
   await setDoc(doc(db, `users/${USER_ID}/months/${monthKey}`), {
-    income: 0
+    income: 0,
+    savingsGoal: 0
   });
 
   // Delete all expenses
@@ -218,6 +292,28 @@ async function clearMonth() {
 }
 
 // ---------------------------------------------------------
+// RENDER PAYCHECKS FOR MONTH
+// ---------------------------------------------------------
+function renderPaychecksForMonth(monthKey) {
+  const paydays = getPaydaysForMonth(monthKey);
+  paycheckTableBody.innerHTML = "";
+
+  paydays.forEach(pd => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${formatDateISO(pd)}</td>
+      <td class="right">${formatCurrency(PAYCHECK_AMOUNT)}</td>
+    `;
+    paycheckTableBody.appendChild(tr);
+  });
+
+  const total = paydays.length * PAYCHECK_AMOUNT;
+  paycheckSummarySmall.textContent = paydays.length
+    ? `${paydays.length} paycheck${paydays.length > 1 ? "s" : ""} · ${formatCurrency(total)} this month`
+    : "No paychecks in this month based on current schedule.";
+}
+
+// ---------------------------------------------------------
 // RENDER MONTH (REAL-TIME)
 // ---------------------------------------------------------
 function subscribeToMonth() {
@@ -225,11 +321,17 @@ function subscribeToMonth() {
   const monthRef = doc(db, `users/${USER_ID}/months/${monthKey}`);
   const expCol = collection(db, `users/${USER_ID}/months/${monthKey}/expenses`);
 
-  // Income listener
+  renderPaychecksForMonth(monthKey);
+
+  // Income + savings listener
   onSnapshot(monthRef, (snap) => {
-    const data = snap.data() || { income: 0 };
-    plannedIncomeEl.textContent = formatCurrency(data.income);
+    const data = snap.data() || { income: 0, savingsGoal: 0 };
+    plannedIncomeEl.textContent = formatCurrency(data.income || 0);
     incomeInput.value = data.income || "";
+    savingsGoalInput.value = data.savingsGoal || "";
+
+    // Update savings progress based on current expenses (we'll recompute below)
+    // This will be finalized in the expenses listener once total is known.
   });
 
   // Expenses listener
@@ -268,17 +370,38 @@ function subscribeToMonth() {
       remainingCard.classList.add("bad");
       remainingCard.classList.remove("good");
     }
+
+    // Savings goal progress
+    const savingsGoal = Number(savingsGoalInput.value) || 0;
+    const savedSoFar = Math.max(income - total, 0); // treat remaining as potential savings
+    savingsProgressEl.textContent = `${formatCurrency(savedSoFar)} / ${formatCurrency(savingsGoal)}`;
+
+    if (!savingsGoal) {
+      savingsStatusTextEl.textContent = "Set a savings goal to track how much you’re keeping.";
+    } else if (savedSoFar >= savingsGoal) {
+      savingsStatusTextEl.textContent = "Nice — you’ve hit your savings goal for this month.";
+    } else {
+      const remainingToGoal = savingsGoal - savedSoFar;
+      savingsStatusTextEl.textContent = `You need ${formatCurrency(remainingToGoal)} more to reach your savings goal.`;
+    }
   });
 }
 
 // ---------------------------------------------------------
 // INIT
 // ---------------------------------------------------------
-(function init() {
+(async function init() {
   const nowMonth = new Date().toISOString().slice(0, 7);
   monthSelect.value = nowMonth;
 
-  monthSelect.addEventListener("change", () => {
+  // Ensure income is auto-set from paychecks for the initial month
+  await ensureMonthIncomeFromPaychecks(getMonthKey());
+
+  // If today is a payday, make sure the month reflects all paychecks
+  // (this is already handled by ensureMonthIncomeFromPaychecks via count of paydays)
+
+  monthSelect.addEventListener("change", async () => {
+    await ensureMonthIncomeFromPaychecks(getMonthKey());
     subscribeToMonth();
   });
 
