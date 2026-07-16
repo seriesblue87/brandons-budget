@@ -4,135 +4,283 @@
   <meta charset="UTF-8" />
   <title>Brandon's Budget</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- PREMIUM DARK GLASSY THEME -->
   <style>
-    * { box-sizing: border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-    body { margin: 0; padding: 1.5rem; background: radial-gradient(circle at top, #e0f2fe 0, #f5f5f7 45%, #e5e7eb 100%); color: #0f172a; }
-    h1 { margin-bottom: 0.25rem; font-weight: 700; letter-spacing: 0.02em; }
-    h2 { margin-top: 1.5rem; margin-bottom: 0.5rem; }
-    .container { max-width: 960px; margin: 0 auto; background: #ffffff; padding: 1.75rem; border-radius: 1rem; box-shadow: 0 18px 40px rgba(15,23,42,0.12); border: 1px solid #e5e7eb; }
-    .row { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; }
-    .row > div { flex: 1 1 220px; }
-    label { display: block; font-size: 0.85rem; margin-bottom: 0.25rem; color: #4b5563; }
-    input, select { width: 100%; padding: 0.5rem 0.6rem; border-radius: 0.6rem; border: 1px solid #d1d5db; font-size: 0.95rem; background: #f9fafb; }
-    input:focus, select:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 1px #2563eb33; background: #ffffff; }
-    button { border: none; border-radius: 0.6rem; padding: 0.55rem 1rem; font-size: 0.95rem; cursor: pointer; transition: transform 0.05s ease, box-shadow 0.1s ease, background 0.1s ease; }
-    button:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(15,23,42,0.12); }
-    .btn-primary { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #ffffff; }
-    .btn-secondary { background: #e5e7eb; color: #111827; }
-    .btn-danger { background: #ef4444; color: #ffffff; }
-    .summary { display: flex; flex-wrap: wrap; gap: 1rem; margin: 1rem 0; }
-    .card { flex: 1 1 180px; background: #f9fafb; border-radius: 0.9rem; padding: 0.75rem 1rem; border: 1px solid #e5e7eb; position: relative; overflow: hidden; }
-    .card::before { content: ""; position: absolute; inset: 0; opacity: 0.06; background: radial-gradient(circle at top left, #2563eb, transparent 60%); pointer-events: none; }
-    .card-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: #6b7280; margin-bottom: 0.25rem; }
-    .card-value { font-size: 1.15rem; font-weight: 600; }
-    .card.good { border-color: #22c55e33; background: #ecfdf3; }
-    .card.bad { border-color: #ef444433; background: #fef2f2; }
-    table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; border-radius: 0.75rem; overflow: hidden; }
-    th, td { padding: 0.5rem; font-size: 0.9rem; border-bottom: 1px solid #e5e7eb; text-align: left; }
-    th { background: #f3f4f6; font-weight: 600; }
-    tr:nth-child(even) td { background: #f9fafb; }
-    .right { text-align: right; }
-    .category-pill { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 999px; font-size: 0.75rem; background: #e5e7eb; color: #374151; }
-    .header-row { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
-    .small { font-size: 0.8rem; color: #6b7280; }
-    .pill-info { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.6rem; border-radius: 999px; background: #eff6ff; color: #1d4ed8; font-size: 0.8rem; }
+    * {
+      box-sizing: border-box;
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 2rem;
+      background: radial-gradient(circle at top, #0f1115, #0b0d10 40%, #08090c 100%);
+      color: #f1f5f9;
+    }
+
+    h1 {
+      margin-bottom: 0.25rem;
+      font-weight: 700;
+      font-size: 1.9rem;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+    }
+
+    h2 {
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      background: rgba(255,255,255,0.06);
+      backdrop-filter: blur(18px);
+      padding: 2rem;
+      border-radius: 1.2rem;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.45);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .row > div {
+      flex: 1 1 220px;
+    }
+
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      margin-bottom: 0.25rem;
+      color: #94a3b8;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 0.65rem 0.75rem;
+      border-radius: 0.6rem;
+      border: 1px solid rgba(255,255,255,0.15);
+      font-size: 0.95rem;
+      background: rgba(255,255,255,0.08);
+      color: #f8fafc;
+      transition: all 0.15s ease;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #f59e0b;
+      box-shadow: 0 0 0 3px rgba(245,158,11,0.25);
+      background: rgba(255,255,255,0.12);
+    }
+
+    button {
+      border: none;
+      border-radius: 0.6rem;
+      padding: 0.65rem 1.1rem;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.4);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #1e1e1e;
+      font-weight: 600;
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.12);
+      color: #e2e8f0;
+    }
+
+    .btn-danger {
+      background: #ef4444;
+      color: #ffffff;
+    }
+
+    .summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .card {
+      flex: 1 1 180px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 1rem;
+      padding: 1rem 1.2rem;
+      border: 1px solid rgba(255,255,255,0.15);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #cbd5e1;
+      margin-bottom: 0.35rem;
+    }
+
+    .card-value {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .card.good {
+      border-color: rgba(34,197,94,0.4);
+      background: rgba(34,197,94,0.15);
+    }
+
+    .card.bad {
+      border-color: rgba(239,68,68,0.4);
+      background: rgba(239,68,68,0.15);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.75rem;
+      border-radius: 0.75rem;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 0.65rem;
+      font-size: 0.9rem;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      text-align: left;
+      color: #e2e8f0;
+    }
+
+    th {
+      background: rgba(255,255,255,0.08);
+      font-weight: 600;
+    }
+
+    tr:nth-child(even) td {
+      background: rgba(255,255,255,0.04);
+    }
+
+    .right {
+      text-align: right;
+    }
+
+    .category-pill {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      background: rgba(255,255,255,0.12);
+      color: #f8fafc;
+    }
+
+    .pill-info {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      background: rgba(245,158,11,0.15);
+      color: #fbbf24;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
   </style>
 </head>
+
 <body>
   <div class="container">
     <div class="header-row">
       <div>
         <h1>Brandon's Budget</h1>
-        <!-- data synced line removed -->
-        <div class="small pill-info">
-          <span>Biweekly paycheck: $1,937.04 · Every other Wednesday</span>
-        </div>
-      </div>
-      <div>
-        <label for="monthSelect">Month</label>
-        <input type="month" id="monthSelect" />
+        <div class="pill-info">Biweekly Paycheck: $1,937.04</div>
       </div>
     </div>
 
-    <h2>Budget setup</h2>
+    <h2>Income</h2>
     <div class="row">
       <div>
-        <label for="incomeInput">Planned income for this month</label>
-        <input type="number" id="incomeInput" min="0" step="0.01" placeholder="auto from paychecks, or override" />
-      </div>
-      <div>
-        <label for="savingsGoalInput">Savings goal for this month</label>
-        <input type="number" id="savingsGoalInput" min="0" step="0.01" placeholder="e.g. 500.00" />
+        <label for="incomeInput">Total Income</label>
+        <input type="number" id="incomeInput" min="0" step="0.01" />
       </div>
       <div>
         <label>&nbsp;</label>
-        <button class="btn-primary" id="saveBudgetBtn">Save budget</button>
+        <button class="btn-primary" id="saveBudgetBtn">Save Income</button>
       </div>
     </div>
 
     <div class="summary">
       <div class="card">
-        <div class="card-title">Planned income</div>
+        <div class="card-title">Total Income</div>
         <div class="card-value" id="plannedIncome">$0.00</div>
-        <div class="small" id="paycheckSummarySmall"></div>
       </div>
+
       <div class="card">
-        <div class="card-title">Total spent</div>
+        <div class="card-title">Total Spent</div>
         <div class="card-value" id="totalSpent">$0.00</div>
       </div>
+
       <div class="card" id="remainingCard">
-        <div class="card-title">Remaining budget</div>
+        <div class="card-title">Remaining</div>
         <div class="card-value" id="remainingAmount">$0.00</div>
-      </div>
-      <div class="card">
-        <div class="card-title">Savings goal progress</div>
-        <div class="card-value" id="savingsProgress">$0.00 / $0.00</div>
-        <div class="small" id="savingsStatusText"></div>
       </div>
     </div>
 
-    <h2>Paychecks for this month</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Date (Wednesday)</th>
-          <th class="right">Amount</th>
-        </tr>
-      </thead>
-      <tbody id="paycheckTableBody"></tbody>
-    </table>
+    <button class="btn-danger" id="fullResetBtn">Reset Everything</button>
 
-    <!-- RECURRING EXPENSES SECTION -->
-    <h2>Recurring Monthly Expenses</h2>
+    <h2>Recurring Expenses</h2>
     <div class="row">
       <div>
         <label for="recName">Name</label>
-        <input type="text" id="recName" placeholder="Rent, Phone Bill, Insurance..." />
+        <input type="text" id="recName" />
       </div>
       <div>
         <label for="recCategory">Category</label>
         <select id="recCategory">
-          <option value="Housing">Housing</option>
           <option value="Food">Food</option>
-          <option value="Transportation">Transportation</option>
-          <option value="Utilities">Utilities</option>
+          <option value="Bills">Bills</option>
           <option value="Entertainment">Entertainment</option>
-          <option value="Debt">Debt</option>
-          <option value="Savings">Savings</option>
-          <option value="Other">Other</option>
+          <option value="Personal Care">Personal Care</option>
+          <option value="Gas">Gas</option>
         </select>
       </div>
       <div>
         <label for="recAmount">Amount</label>
-        <input type="number" id="recAmount" min="0" step="0.01" placeholder="e.g. 120.00" />
+        <input type="number" id="recAmount" min="0" step="0.01" />
       </div>
       <div>
         <label>&nbsp;</label>
-        <button class="btn-primary" id="addRecurringBtn">Add recurring</button>
+        <button class="btn-primary" id="addRecurringBtn">Add Recurring</button>
       </div>
     </div>
 
-    <button class="btn-secondary" id="applyRecurringBtn">Apply recurring to this month</button>
+    <button class="btn-secondary" id="applyRecurringBtn">Apply Recurring</button>
 
     <table>
       <thead>
@@ -146,39 +294,33 @@
       <tbody id="recurringTableBody"></tbody>
     </table>
 
-    <h2>Add expense</h2>
+    <h2>Add Expense</h2>
     <div class="row">
       <div>
         <label for="expenseName">Name</label>
-        <input type="text" id="expenseName" placeholder="Groceries, Rent, Uber..." />
+        <input type="text" id="expenseName" />
       </div>
       <div>
         <label for="expenseCategory">Category</label>
         <select id="expenseCategory">
-          <option value="Housing">Housing</option>
           <option value="Food">Food</option>
-          <option value="Transportation">Transportation</option>
-          <option value="Utilities">Utilities</option>
+          <option value="Bills">Bills</option>
           <option value="Entertainment">Entertainment</option>
-          <option value="Debt">Debt</option>
-          <option value="Savings">Savings</option>
-          <option value="Other">Other</option>
+          <option value="Personal Care">Personal Care</option>
+          <option value="Gas">Gas</option>
         </select>
       </div>
       <div>
         <label for="expenseAmount">Amount</label>
-        <input type="number" id="expenseAmount" min="0" step="0.01" placeholder="e.g. 45.90" />
+        <input type="number" id="expenseAmount" min="0" step="0.01" />
       </div>
       <div>
         <label>&nbsp;</label>
-        <button class="btn-primary" id="addExpenseBtn">Add expense</button>
+        <button class="btn-primary" id="addExpenseBtn">Add Expense</button>
       </div>
     </div>
 
-    <div class="header-row">
-      <h2>Expenses</h2>
-      <button class="btn-secondary" id="clearMonthBtn">Clear this month</button>
-    </div>
+    <h2>Expenses</h2>
     <table>
       <thead>
         <tr>
