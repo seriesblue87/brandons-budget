@@ -139,6 +139,13 @@ function formatMonthLabel(monthKey) {
   return `${MONTH_LABELS[month - 1]} ${year}`;
 }
 
+// Storage/sorting stays ISO (YYYY-MM-DD) everywhere; this is purely for display,
+// using a month name so it reads unambiguously (no MM-DD-YYYY vs DD-MM-YYYY confusion).
+function formatDisplayDate(iso) {
+  const [year, month, day] = iso.split('-').map(Number);
+  return `${MONTH_LABELS[month - 1].slice(0, 3)} ${day}, ${year}`;
+}
+
 function shiftMonth(monthKey, delta) {
   const [year, month] = monthKey.split('-').map(Number);
   const d = new Date(Date.UTC(year, month - 1 + delta, 1));
@@ -286,7 +293,7 @@ function renderExpenseTable(expenses) {
   sorted.forEach(exp => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${exp.date}</td>
+      <td>${formatDisplayDate(exp.date)}</td>
       <td>${exp.name}</td>
       <td><span class="pill ${categoryClass(exp.category)}">${exp.category}</span></td>
       <td class="right">${formatCurrency(exp.amount)}</td>
@@ -369,7 +376,7 @@ function renderNextPaycheck() {
 
   const diffDays = Math.round((upcoming - today) / (1000 * 60 * 60 * 24));
   nextPayDays.textContent = diffDays === 0 ? 'Today' : `${diffDays}`;
-  nextPayDate.textContent = upcoming.toISOString().slice(0, 10);
+  nextPayDate.textContent = formatDisplayDate(upcoming.toISOString().slice(0, 10));
 }
 
 // ---------------------------------------------------------
