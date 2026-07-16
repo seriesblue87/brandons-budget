@@ -5,7 +5,7 @@
   <title>Brandon's Budget</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- PREMIUM DARK GLASSY THEME -->
+  <!-- PREMIUM DARK GLASSMORPHISM THEME -->
   <style>
     * {
       box-sizing: border-box;
@@ -35,15 +35,22 @@
       color: #e2e8f0;
     }
 
+    /* TRUE GLASS PANEL */
+    .glass {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(22px) saturate(180%);
+      -webkit-backdrop-filter: blur(22px) saturate(180%);
+      border-radius: 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow:
+        0 8px 25px rgba(0, 0, 0, 0.45),
+        inset 0 0 0.5px rgba(255, 255, 255, 0.4);
+    }
+
     .container {
       max-width: 960px;
       margin: 0 auto;
-      background: rgba(255,255,255,0.06);
-      backdrop-filter: blur(18px);
       padding: 2rem;
-      border-radius: 1.2rem;
-      box-shadow: 0 25px 50px rgba(0,0,0,0.45);
-      border: 1px solid rgba(255,255,255,0.12);
     }
 
     .row {
@@ -129,13 +136,7 @@
 
     .card {
       flex: 1 1 180px;
-      background: rgba(255,255,255,0.08);
-      border-radius: 1rem;
       padding: 1rem 1.2rem;
-      border: 1px solid rgba(255,255,255,0.15);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.35);
-      position: relative;
-      overflow: hidden;
     }
 
     .card-title {
@@ -168,6 +169,9 @@
       margin-top: 0.75rem;
       border-radius: 0.75rem;
       overflow: hidden;
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
     }
 
     th, td {
@@ -215,7 +219,7 @@
 </head>
 
 <body>
-  <div class="container">
+  <div class="container glass">
     <div class="header-row">
       <div>
         <h1>Brandon's Budget</h1>
@@ -236,17 +240,17 @@
     </div>
 
     <div class="summary">
-      <div class="card">
+      <div class="card glass">
         <div class="card-title">Total Income</div>
         <div class="card-value" id="plannedIncome">$0.00</div>
       </div>
 
-      <div class="card">
+      <div class="card glass">
         <div class="card-title">Total Spent</div>
         <div class="card-value" id="totalSpent">$0.00</div>
       </div>
 
-      <div class="card" id="remainingCard">
+      <div class="card glass" id="remainingCard">
         <div class="card-title">Remaining</div>
         <div class="card-value" id="remainingAmount">$0.00</div>
       </div>
@@ -282,7 +286,7 @@
 
     <button class="btn-secondary" id="applyRecurringBtn">Apply Recurring</button>
 
-    <table>
+    <table class="glass">
       <thead>
         <tr>
           <th>Name</th>
@@ -321,7 +325,7 @@
     </div>
 
     <h2>Expenses</h2>
-    <table>
+    <table class="glass">
       <thead>
         <tr>
           <th>Date</th>
